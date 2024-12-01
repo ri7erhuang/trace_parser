@@ -1,2 +1,2 @@
-def execute():
-    print('preview excute')
+def execute(path):
+    print(f'preview is processing : {path}')

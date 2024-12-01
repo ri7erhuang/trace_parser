@@ -1,16 +1,17 @@
 import importlib
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 
+DEBUG = True
 MAX_THREADS = 6
 
 
 def handle_file(module, filepath):
-    print(f"处理文件: {filepath}")
     if hasattr(module, 'execute') and callable(getattr(module, 'execute')):
-        module.execute()
+        module.execute(filepath)
     else:
-        print(f"Module {module} does not have an 'execute' function.")
+        print(f"模块 {module} 并未包含 'execute' 方法.")
 
 
 def get_valid_path(path_input):
@@ -43,10 +44,12 @@ def process_file(module, file_path, executor):
             handle_file(module, file_path)
 
 
-# 主程序流程控制部分
 def process_trace(selected_module):
     while True:
-        path_input = input("请输入一个文件夹路径或文件的绝对路径: ")
+        if DEBUG:
+            path_input = 'D:\\testing'
+        else:
+            path_input = input("请输入一个文件夹路径或文件的绝对路径: ")
         valid_path = get_valid_path(path_input)
         if not valid_path:
             continue
@@ -61,9 +64,8 @@ def process_trace(selected_module):
 
 def load_module(name):
     try:
-        # 动态加载模块
-        m = importlib.import_module(name)
-        return m
+        m_n = importlib.import_module(name)
+        return m_n
     except ImportError as e:
         print(f"读取模块 {name} 错误: {e}")
         return None
@@ -75,21 +77,26 @@ def choose_module():
     files = [f for f in os.listdir(modules_dir) if f.endswith('.py') and not f.startswith('__')]
     module_names = [os.path.splitext(f)[0] for f in files]
     index = 1
+    print('0.退出')
     for module_name in module_names:
-        print(f'{index}.{module_name}')
+        print(f'{index}.{module_name}场景')
         index = index + 1
     try:
         choice = int(input("请选择这些trace的场景: "))
+        if choice == 0:
+            return None
         if choice < 1 or choice > len(module_names):
-            raise ValueError("Invalid choice, please enter a number within the range.")
+            raise ValueError("无效的选择，请输入合理范围内的选项.")
     except ValueError as e:
         print(f"错误: {e}")
+        return None
     else:
-        # 根据用户选择的序号获取模块名
         selected_module_name = module_names[choice - 1]
         return load_module(selected_module_name)
 
 
 if __name__ == "__main__":
+    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules'))
     m = choose_module()
-    process_trace(m)
+    if m is not None:
+        process_trace(m)
